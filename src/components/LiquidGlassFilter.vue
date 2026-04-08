@@ -1,0 +1,277 @@
+<script setup lang="ts">
+import { computed, watch, ref, onUnmounted } from 'vue'
+import type { ShapeType, BezelType } from '../types'
+import {
+  calculateDisplacementMap,
+  calculateDisplacementMap2D,
+  calculateDisplacementMapWithShape,
+} from '../lib/displacementMap'
+import { calculateSpecularMap } from '../lib/specular'
+import { calculateMagnifyingMap } from '../lib/magnifyingDisplacement'
+import { CONVEX, CONVEX_CIRCLE, CONCAVE, LIP } from '../lib/surfaceEquations'
+import { imageDataToDataUrl } from '../lib/utils'
+
+interface Props {
+  id: string
+  width?: number
+  height?: number
+  radius?: number
+  bezelWidth?: number
+  curvatureBoost?: number
+  glassThickness?: number
+  refractiveIndex?: number
+  bezelType?: BezelType
+  blur?: number
+  scaleRatio?: number
+  specularOpacity?: number
+  specularSaturation?: number
+  specularAngle?: number
+  magnify?: boolean
+  magnifyingScale?: number
+  shape?: ShapeType
+  cornerRadius?: number
+  squircleExponent?: number
+  quality?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  width: 150,
+  height: 150,
+  radius: 75,
+  bezelWidth: 40,
+  curvatureBoost: 1.22,
+  glassThickness: 120,
+  refractiveIndex: 1.5,
+  bezelType: 'convex_squircle',
+  blur: 0.2,
+  scaleRatio: 1,
+  specularOpacity: 0.4,
+  specularSaturation: 4,
+  magnify: false,
+  magnifyingScale: 24,
+  shape: 'pill',
+  cornerRadius: 1.0,
+  squircleExponent: 2,
+  quality: 2,
+})
+
+const displacementMapUrl = ref('')
+const specularMapUrl = ref('')
+const magnifyingMapUrl = ref('')
+const maxDisplacement = ref(0)
+
+const MIN_DIMENSION = 1
+const LARGE_WIDTH_DELTA = 8
+const LARGE_HEIGHT_DELTA = 4
+const REGENERATE_DEBOUNCE_MS = 16
+
+let regenerateTimeout: ReturnType<typeof setTimeout> | null = null
+let hasGeneratedOnce = false
+let lastGeneratedWidth = 0
+let lastGeneratedHeight = 0
+
+const safeWidth = computed(() => Math.max(MIN_DIMENSION, props.width))
+const safeHeight = computed(() => Math.max(MIN_DIMENSION, props.height))
+
+const clearRegenerateTimeout = () => {
+  if (!regenerateTimeout) return
+  clearTimeout(regenerateTimeout)
+  regenerateTimeout = null
+}
+
+function getSurfaceFn(bezelType: BezelType) {
+  switch (bezelType) {
+    case 'convex_circle': return CONVEX_CIRCLE.fn
+    case 'convex_squircle': return CONVEX.fn
+    case 'concave': return CONCAVE.fn
+    case 'lip': return LIP.fn
+    default: return CONVEX.fn
+  }
+}
+
+function regenerateAssets() {
+  const surfaceFn = getSurfaceFn(props.bezelType)
+  const width = safeWidth.value
+  const height = safeHeight.value
+  const maxBezelByGeometry = Math.max(2, Math.min(width, height) / 2 - 1)
+  const effectiveBezelWidth = Math.min(
+    maxBezelByGeometry,
+    Math.max(1, props.bezelWidth * props.curvatureBoost)
+  )
+
+  const precomputedMap = calculateDisplacementMap(
+    props.glassThickness,
+    effectiveBezelWidth,
+    surfaceFn,
+    props.refractiveIndex
+  )
+
+  maxDisplacement.value = Math.max(...precomputedMap.map(x => Math.abs(x))) || 1
+
+  let displacementImageData: ImageData
+
+  if (props.shape && props.shape !== 'circle') {
+    displacementImageData = calculateDisplacementMapWithShape(
+      width, height, width, height,
+      effectiveBezelWidth, 100, precomputedMap,
+      props.shape, props.cornerRadius, props.squircleExponent, props.quality
+    )
+  } else {
+    displacementImageData = calculateDisplacementMap2D(
+      width, height, width, height,
+      props.radius, effectiveBezelWidth, 100,
+      precomputedMap, props.quality
+    )
+  }
+
+  displacementMapUrl.value = imageDataToDataUrl(displacementImageData)
+
+  const specularImageData = calculateSpecularMap(
+    width, height,
+    props.radius, effectiveBezelWidth,
+    props.specularAngle, props.quality
+  )
+  specularMapUrl.value = imageDataToDataUrl(specularImageData)
+
+  if (props.magnify) {
+    const magnifyingImageData = calculateMagnifyingMap(
+      width, height, props.quality
+    )
+    magnifyingMapUrl.value = imageDataToDataUrl(magnifyingImageData)
+  }
+
+  hasGeneratedOnce = true
+  lastGeneratedWidth = width
+  lastGeneratedHeight = height
+}
+
+function debouncedRegenerate() {
+  // Run the very first generation immediately to avoid visible pop on initial mount.
+  if (!hasGeneratedOnce) {
+    regenerateAssets()
+    return
+  }
+
+  const widthDelta = Math.abs(safeWidth.value - lastGeneratedWidth)
+  const heightDelta = Math.abs(safeHeight.value - lastGeneratedHeight)
+  const hasLargeDimensionJump = widthDelta >= LARGE_WIDTH_DELTA || heightDelta >= LARGE_HEIGHT_DELTA
+
+  // Large geometry changes should regenerate immediately to avoid one-frame stale filter.
+  if (hasLargeDimensionJump) {
+    clearRegenerateTimeout()
+    regenerateAssets()
+    return
+  }
+  clearRegenerateTimeout()
+  regenerateTimeout = setTimeout(regenerateAssets, REGENERATE_DEBOUNCE_MS)
+}
+
+const filterDeps = () => [
+  safeWidth.value, safeHeight.value, props.radius,
+  props.bezelWidth, props.curvatureBoost, props.glassThickness, props.refractiveIndex,
+  props.bezelType, props.magnify,
+  props.shape, props.cornerRadius, props.squircleExponent, props.quality,
+]
+
+watch(
+  filterDeps,
+  debouncedRegenerate,
+  { immediate: true, deep: true }
+)
+
+onUnmounted(() => {
+  clearRegenerateTimeout()
+})
+
+const scale = computed(() => maxDisplacement.value * props.scaleRatio)
+const specularSaturationValue = computed(() => props.specularSaturation.toString())
+</script>
+
+<template>
+  <svg color-interpolation-filters="sRGB" :style="{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }">
+    <defs>
+      <filter :id="id">
+        <!-- Magnifying pre-warp (optional) -->
+        <template v-if="magnify && magnifyingMapUrl">
+          <feImage
+            :href="magnifyingMapUrl"
+            x="0" y="0"
+            :width="width" :height="height"
+            result="magnifying_displacement_map"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="magnifying_displacement_map"
+            :scale="magnifyingScale"
+            xChannelSelector="R"
+            yChannelSelector="G"
+            result="magnified_source"
+          />
+        </template>
+
+        <!-- Gaussian blur -->
+        <feGaussianBlur
+          :in="magnify ? 'magnified_source' : 'SourceGraphic'"
+          :stdDeviation="blur"
+          result="blurred_source"
+        />
+
+        <!-- Main refraction displacement -->
+        <feImage
+          v-if="displacementMapUrl"
+          :href="displacementMapUrl"
+          x="0" y="0"
+          :width="width" :height="height"
+          result="displacement_map"
+        />
+        <feDisplacementMap
+          in="blurred_source"
+          in2="displacement_map"
+          :scale="scale"
+          xChannelSelector="R"
+          yChannelSelector="G"
+          result="displaced"
+        />
+
+        <!-- Saturation boost -->
+        <feColorMatrix
+          in="displaced"
+          type="saturate"
+          :values="specularSaturationValue"
+          result="displaced_saturated"
+        />
+
+        <!-- Specular highlight layer -->
+        <feImage
+          v-if="specularMapUrl"
+          :href="specularMapUrl"
+          x="0" y="0"
+          :width="width" :height="height"
+          result="specular_layer"
+        />
+        <feComposite
+          in="displaced_saturated"
+          in2="specular_layer"
+          operator="in"
+          result="specular_saturated"
+        />
+        <feComponentTransfer in="specular_layer" result="specular_faded">
+          <feFuncA type="linear" :slope="specularOpacity" />
+        </feComponentTransfer>
+
+        <!-- Blend refraction + specular -->
+        <feBlend
+          in="specular_saturated"
+          in2="displaced"
+          mode="normal"
+          result="withSaturation"
+        />
+        <feBlend
+          in="specular_faded"
+          in2="withSaturation"
+          mode="normal"
+        />
+      </filter>
+    </defs>
+  </svg>
+</template>

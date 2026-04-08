@@ -1,0 +1,39 @@
+{
+  "name": "liquid-glass-core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Liquid Glass effect core library for Vue 3 — physics-based refraction, specular highlights, and ready-to-use glass components",
+  "main": "./dist/liquid-glass-core.js",
+  "module": "./dist/liquid-glass-core.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/liquid-glass-core.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./lib": {
+      "import": "./dist/liquid-glass-core.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vue-tsc -p tsconfig.build.json --declaration --emitDeclarationOnly --outDir dist",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4",
+    "vue": "^3.5.24",
+    "vue-tsc": "^3.1.4"
+  },
+  "license": "MIT"
+}
