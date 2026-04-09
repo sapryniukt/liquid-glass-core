@@ -1,3 +1,15 @@
+import type { App, Plugin } from 'vue'
+import {
+  LiquidGlassFilter,
+  LiquidGlassPanel,
+  LiquidGlassSearchBar,
+  LiquidGlassButton,
+  LiquidGlassSwitch,
+  LiquidGlassSlider,
+  LiquidGlassBottomNavBar,
+  GradientBlur,
+} from './components'
+
 // Types
 export type {
   ShapeType,
@@ -47,3 +59,26 @@ export {
   LiquidGlassBottomNavBar,
   GradientBlur,
 } from './components'
+
+const allComponents = [
+  LiquidGlassFilter,
+  LiquidGlassPanel,
+  LiquidGlassSearchBar,
+  LiquidGlassButton,
+  LiquidGlassSwitch,
+  LiquidGlassSlider,
+  LiquidGlassBottomNavBar,
+  GradientBlur,
+]
+
+export const LiquidGlassCorePlugin: Plugin = {
+  install(app: App) {
+    for (const component of allComponents) {
+      const componentName = component.name ?? (component as { __name?: string }).__name
+      if (!componentName) continue
+      app.component(componentName, component)
+    }
+  },
+}
+
+export default LiquidGlassCorePlugin
