@@ -3,6 +3,8 @@ import { ref } from "vue";
 import {
   LiquidGlassPanel,
   LiquidGlassSearchBar,
+  LiquidGlassInput,
+  LiquidGlassTextArea,
   LiquidGlassButton,
   LiquidGlassSwitch,
   LiquidGlassSlider,
@@ -10,8 +12,14 @@ import {
 } from "../src";
 
 const searchValue = ref("");
-const switchValue = ref(false);
-const sliderValue = ref(40);
+const inputValue = ref("");
+const textareaValue = ref("This is a liquid glass textarea.\nTry typing here...");
+const switchValueSmall = ref(false);
+const switchValueMedium = ref(false);
+const switchValueLarge = ref(false);
+const sliderValueSmall = ref(30);
+const sliderValueMedium = ref(40);
+const sliderValueLarge = ref(55);
 const navValue = ref("home");
 
 const navItems = [
@@ -94,37 +102,146 @@ const navItems = [
         </div>
       </section>
 
+      <!-- Input -->
+      <section class="demo-section">
+        <h2>Input</h2>
+        <div class="search-wrapper">
+          <LiquidGlassInput
+            v-model="inputValue"
+            size="medium"
+            placeholder="Type in liquid glass input..."
+          />
+        </div>
+      </section>
+
+      <!-- Text Area -->
+      <section class="demo-section">
+        <h2>Text Area</h2>
+        <div class="search-wrapper">
+          <LiquidGlassTextArea
+            v-model="textareaValue"
+            size="medium"
+            placeholder="Write your notes..."
+          />
+        </div>
+      </section>
+
       <!-- Switch -->
       <section class="demo-section">
         <h2>Switch</h2>
-        <LiquidGlassSwitch v-model="switchValue" size="medium" />
-        <span class="demo-value">{{ switchValue ? "ON" : "OFF" }}</span>
+        <div class="control-stack">
+          <div class="control-row">
+            <LiquidGlassSwitch v-model="switchValueSmall" size="small" />
+            <span class="demo-value">small: {{ switchValueSmall ? "ON" : "OFF" }}</span>
+          </div>
+          <div class="control-row">
+            <LiquidGlassSwitch v-model="switchValueMedium" size="medium" />
+            <span class="demo-value"
+              >medium: {{ switchValueMedium ? "ON" : "OFF" }}</span
+            >
+          </div>
+          <div class="control-row">
+            <LiquidGlassSwitch v-model="switchValueLarge" size="large" />
+            <span class="demo-value">large: {{ switchValueLarge ? "ON" : "OFF" }}</span>
+          </div>
+        </div>
       </section>
 
       <!-- Slider -->
       <section class="demo-section">
         <h2>Slider</h2>
-        <LiquidGlassSlider
-          v-model="sliderValue"
-          :min="0"
-          :max="100"
-          size="medium"
-        />
-        <span class="demo-value">{{ Math.round(sliderValue) }}</span>
+        <div class="control-stack">
+          <div class="control-row">
+            <LiquidGlassSlider
+              v-model="sliderValueSmall"
+              :min="0"
+              :max="100"
+              size="small"
+            />
+            <span class="demo-value">small: {{ Math.round(sliderValueSmall) }}</span>
+          </div>
+          <div class="control-row">
+            <LiquidGlassSlider
+              v-model="sliderValueMedium"
+              :min="0"
+              :max="100"
+              size="medium"
+            />
+            <span class="demo-value">medium: {{ Math.round(sliderValueMedium) }}</span>
+          </div>
+          <div class="control-row">
+            <LiquidGlassSlider
+              v-model="sliderValueLarge"
+              :min="0"
+              :max="100"
+              size="large"
+            />
+            <span class="demo-value">large: {{ Math.round(sliderValueLarge) }}</span>
+          </div>
+        </div>
       </section>
 
       <!-- Button -->
       <section class="demo-section">
         <h2>Button</h2>
-        <LiquidGlassButton
-          label="Liquid Glass Button"
-          size="medium"
-          :width="180"
-          :blur="2"
-          :scale-ratio="0.2"
-          :specular-opacity="0.4"
-          :specular-saturation="4"
-        />
+        <div class="control-stack">
+          <div class="control-row">
+            <LiquidGlassButton
+              label="XSmall Button"
+              size="xSmall"
+              :width="160"
+              :blur="2"
+              :specular-opacity="0.4"
+              :specular-saturation="4"
+            />
+            <span class="demo-value">32px</span>
+          </div>
+          <div class="control-row">
+            <LiquidGlassButton
+              label="Small Button"
+              size="small"
+              :width="180"
+              :blur="2"
+              :specular-opacity="0.4"
+              :specular-saturation="4"
+            />
+            <span class="demo-value">36px</span>
+          </div>
+          <div class="control-row">
+            <LiquidGlassButton
+              label="Medium Button"
+              size="medium"
+              :width="200"
+              :blur="2"
+              :specular-opacity="0.4"
+              :specular-saturation="4"
+            />
+            <span class="demo-value">40px (default)</span>
+          </div>
+          <div class="control-row">
+            <LiquidGlassButton
+              label="Large Button"
+              size="large"
+              :width="220"
+              :blur="2"
+              :specular-opacity="0.4"
+              :specular-saturation="4"
+            />
+            <span class="demo-value">44px</span>
+          </div>
+          <div class="control-row">
+            <LiquidGlassButton
+              label="Primary Button"
+              variant="primary"
+              size="medium"
+              :width="220"
+              :blur="2"
+              :specular-opacity="0.4"
+              :specular-saturation="4"
+            />
+            <span class="demo-value">rgb(0, 113, 227)</span>
+          </div>
+        </div>
       </section>
 
       <!-- Bottom Nav Bar -->
@@ -284,5 +401,17 @@ body {
   position: relative;
   width: 420px;
   max-width: 100%;
+}
+
+.control-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 </style>

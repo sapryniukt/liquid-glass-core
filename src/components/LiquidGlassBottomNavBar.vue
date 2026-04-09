@@ -53,7 +53,7 @@ const props = withDefaults(
     modelValue: "",
     size: "medium",
     disabled: false,
-    activeColor: "var(--lg-nav-active, #7ec8ff)",
+    activeColor: "var(--lg-nav-active, rgb(3, 119, 247))",
     hoverLight: true,
     itemGap: 4,
     thumbHeightOffset: 2,
@@ -458,10 +458,15 @@ onUnmounted(() => {
               : 'transform 460ms cubic-bezier(0.22,1,0.36,1), background-color 240ms ease, box-shadow 240ms ease',
           backdropFilter: `url(#${thumbFilterId})`,
           WebkitBackdropFilter: `url(#${thumbFilterId})`,
-          backgroundColor: `rgba(var(--lg-nav-thumb-rgb, 255,255,255), ${thumbBackgroundOpacity})`,
+          backgroundColor: isActive
+            ? `rgba(var(--lg-nav-thumb-rgb, 255,255,255), ${thumbBackgroundOpacity})`
+            : 'var(--lg-nav-thumb-bg, rgba(255,255,255,0.95))',
+          border: isActive
+            ? '1px solid var(--lg-nav-thumb-border-active, rgba(255,255,255,0.22))'
+            : '1px solid var(--lg-nav-thumb-border, rgba(255,255,255,0.38))',
           boxShadow: isActive
             ? 'var(--lg-nav-thumb-shadow-active, 0 6px 22px rgba(0,0,0,0.16), inset 2px 6px 20px rgba(0,0,0,0.08), inset -2px -6px 20px rgba(255,255,255,0.08))'
-            : 'var(--lg-nav-thumb-shadow, 0 4px 18px rgba(0,0,0,0.14), inset 0 1px 8px rgba(255,255,255,0.2))',
+            : 'var(--lg-nav-thumb-shadow, 0 6px 22px rgba(0,0,0,0.2), inset 0 1px 12px rgba(255,255,255,0.28))',
           zIndex: 40,
           pointerEvents: 'auto',
         }"

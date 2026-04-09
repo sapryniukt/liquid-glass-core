@@ -89,31 +89,31 @@ const sizePresets = {
     glassThickness: 10,
   },
   small: {
-    sliderWidth: 100,
-    sliderHeight: 42,
-    thumbWidth: 92,
+    sliderWidth: 58,
+    sliderHeight: 24,
+    thumbWidth: 53,
     thumbScale: 0.65,
-    thumbHeight: 58,
-    bezelWidth: 14,
-    glassThickness: 15,
+    thumbHeight: 31,
+    bezelWidth: 7,
+    glassThickness: 9,
   },
   medium: {
-    sliderWidth: 130,
-    sliderHeight: 54,
-    thumbWidth: 119,
-    thumbHeight: 75,
+    sliderWidth: 76,
+    sliderHeight: 32,
+    thumbWidth: 70,
+    thumbHeight: 43,
     thumbScale: 0.65,
-    bezelWidth: 16,
-    glassThickness: 20,
+    bezelWidth: 9,
+    glassThickness: 12,
   },
   large: {
-    sliderWidth: 160,
-    sliderHeight: 67,
-    thumbWidth: 146,
-    thumbHeight: 92,
+    sliderWidth: 95,
+    sliderHeight: 40,
+    thumbWidth: 87,
+    thumbHeight: 55,
     thumbScale: 0.65,
-    bezelWidth: 18,
-    glassThickness: 25,
+    bezelWidth: 12,
+    glassThickness: 14,
   },
 };
 
@@ -134,14 +134,12 @@ const { hoverStyle: switchHoverStyle, hoverProgress: switchHoverProgress } =
 
 const THUMB_REST_SCALE = computed(() => props.restScale);
 const THUMB_ACTIVE_SCALE = computed(() => props.activeScale);
+const TRACK_INSET_PX = 2;
 const THUMB_REST_OFFSET = computed(
   () => ((1 - THUMB_REST_SCALE.value) * thumbWidth.value) / 2,
 );
 const TRAVEL = computed(
-  () =>
-    sliderWidth.value -
-    sliderHeight.value -
-    (thumbWidth.value - thumbHeight.value) * THUMB_REST_SCALE.value,
+  () => sliderWidth.value - thumbWidth.value * THUMB_REST_SCALE.value - TRACK_INSET_PX * 2,
 );
 
 const internalChecked = ref(props.modelValue);
@@ -254,9 +252,7 @@ const trackBorderColor = computed(() => {
 const thumbX = computed(() => xDragRatio.value * TRAVEL.value);
 
 const thumbMarginLeft = computed(
-  () =>
-    -THUMB_REST_OFFSET.value +
-    (sliderHeight.value - thumbHeight.value * THUMB_REST_SCALE.value) / 2,
+  () => TRACK_INSET_PX - THUMB_REST_OFFSET.value,
 );
 
 const rootStyle = computed<CSSProperties>(() => ({

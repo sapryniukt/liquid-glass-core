@@ -1,6 +1,8 @@
 export { default as LiquidGlassFilter } from './LiquidGlassFilter.vue'
 export { default as LiquidGlassPanel } from './LiquidGlassPanel.vue'
 export { default as LiquidGlassSearchBar } from './LiquidGlassSearchBar.vue'
+export { default as LiquidGlassInput } from './LiquidGlassInput.vue'
+export { default as LiquidGlassTextArea } from './LiquidGlassTextArea.vue'
 export { default as LiquidGlassButton } from './LiquidGlassButton.vue'
 export { default as LiquidGlassSwitch } from './LiquidGlassSwitch.vue'
 export { default as LiquidGlassSlider } from './LiquidGlassSlider.vue'

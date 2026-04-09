@@ -9,7 +9,8 @@ import LiquidGlassFilter from "./LiquidGlassFilter.vue";
 const props = withDefaults(
   defineProps<{
     label?: string;
-    size?: "small" | "medium" | "large";
+    size?: "xSmall" | "small" | "medium" | "large";
+    variant?: "default" | "primary";
     disabled?: boolean;
     width?: number;
     // Liquid glass tuning
@@ -41,6 +42,7 @@ const props = withDefaults(
   {
     label: "Liquid Glass Button",
     size: "medium",
+    variant: "default",
     disabled: false,
     width: 180,
     specularOpacity: 0.4,
@@ -75,9 +77,10 @@ const emit = defineEmits<{
 }>();
 
 const sizePresets = {
-  small: { height: 44, fontSize: 14 },
-  medium: { height: 56, fontSize: 15 },
-  large: { height: 64, fontSize: 16 },
+  xSmall: { height: 32, fontSize: 13 },
+  small: { height: 36, fontSize: 14 },
+  medium: { height: 40, fontSize: 15 },
+  large: { height: 44, fontSize: 16 },
 };
 
 const pressed = ref(false);
@@ -101,13 +104,52 @@ const scaleRatio = computed(() =>
     ? props.refractionLevel + props.pressedRefractionBoost
     : props.refractionLevel,
 );
+const resolvedBlur = computed(() => (isPrimary.value ? props.blur + 2.2 : props.blur));
+const resolvedScaleRatio = computed(() =>
+  isPrimary.value ? scaleRatio.value * 0.58 : scaleRatio.value,
+);
+const resolvedSpecularOpacity = computed(() =>
+  isPrimary.value ? Math.min(props.specularOpacity, 0.26) : props.specularOpacity,
+);
+const resolvedSpecularSaturation = computed(() =>
+  isPrimary.value ? props.specularSaturation + 12 : props.specularSaturation,
+);
+const isPrimary = computed(() => props.variant === "primary");
+const resolvedBorderColor = computed(() =>
+  isPrimary.value
+    ? "var(--lg-button-primary-border, rgba(3, 119, 247, 0.75))"
+    : props.borderColor,
+);
+const resolvedTextColor = computed(() =>
+  isPrimary.value ? "var(--lg-button-primary-text, rgba(255, 255, 255, 0.98))" : props.textColor,
+);
+const resolvedBackgroundColor = computed(() =>
+  isPrimary.value
+    ? "var(--lg-button-primary-bg, rgba(3, 119, 247, 0.95))"
+    : props.backgroundColor,
+);
+const resolvedBackgroundColorPressed = computed(() =>
+  isPrimary.value
+    ? "var(--lg-button-primary-bg-pressed, rgba(3, 119, 247, 0.97))"
+    : props.backgroundColorPressed,
+);
+const resolvedShadow = computed(() =>
+  isPrimary.value
+    ? "var(--lg-button-primary-shadow, 0 2px 12px rgba(3, 119, 247, 0.3))"
+    : props.shadow,
+);
+const resolvedShadowPressed = computed(() =>
+  isPrimary.value
+    ? "var(--lg-button-primary-shadow-pressed, 0 6px 24px rgba(3, 119, 247, 0.38))"
+    : props.shadowPressed,
+);
 const buttonStyle = computed<CSSProperties>(() => ({
   position: "relative",
   width: `${props.width}px`,
   height: `${height.value}px`,
   borderRadius: `${radius.value}px`,
-  border: `${props.borderStyle} ${props.borderColor}`,
-  color: props.textColor,
+  border: `${props.borderStyle} ${resolvedBorderColor.value}`,
+  color: resolvedTextColor.value,
   fontSize: `${dimensions.value.fontSize}px`,
   fontWeight: props.fontWeight,
   letterSpacing: props.letterSpacing,
@@ -119,9 +161,9 @@ const buttonStyle = computed<CSSProperties>(() => ({
   backdropFilter: `url(#${filterId})`,
   WebkitBackdropFilter: `url(#${filterId})`,
   backgroundColor: pressed.value
-    ? props.backgroundColorPressed
-    : props.backgroundColor,
-  boxShadow: pressed.value ? props.shadowPressed : props.shadow,
+    ? resolvedBackgroundColorPressed.value
+    : resolvedBackgroundColor.value,
+  boxShadow: pressed.value ? resolvedShadowPressed.value : resolvedShadow.value,
 }));
 
 const handlePointerDown = () => {
@@ -157,10 +199,10 @@ const handleClick = (event: MouseEvent) => {
       :refractive-index="hoverRefractiveIndex"
       bezel-type="convex_squircle"
       shape="pill"
-      :blur="blur"
-      :scale-ratio="scaleRatio"
-      :specular-opacity="specularOpacity"
-      :specular-saturation="specularSaturation"
+      :blur="resolvedBlur"
+      :scale-ratio="resolvedScaleRatio"
+      :specular-opacity="resolvedSpecularOpacity"
+      :specular-saturation="resolvedSpecularSaturation"
     />
 
     <button
