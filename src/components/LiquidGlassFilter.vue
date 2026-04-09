@@ -32,6 +32,9 @@ interface Props {
   cornerRadius?: number
   squircleExponent?: number
   quality?: number
+  edgeChromatic?: boolean
+  edgeChromaticStrength?: number
+  edgeChromaticShift?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -53,6 +56,9 @@ const props = withDefaults(defineProps<Props>(), {
   cornerRadius: 1.0,
   squircleExponent: 2,
   quality: 2,
+  edgeChromatic: false,
+  edgeChromaticStrength: 0.72,
+  edgeChromaticShift: 0.5,
 })
 
 const displacementMapUrl = ref('')
@@ -184,6 +190,8 @@ onUnmounted(() => {
 })
 
 const scale = computed(() => maxDisplacement.value * props.scaleRatio)
+const scaleRed = computed(() => scale.value * (1 + props.edgeChromaticShift))
+const scaleBlue = computed(() => scale.value * (1 - props.edgeChromaticShift))
 const specularSaturationValue = computed(() => props.specularSaturation.toString())
 </script>
 
@@ -232,6 +240,58 @@ const specularSaturationValue = computed(() => props.specularSaturation.toString
           yChannelSelector="G"
           result="displaced"
         />
+
+        <!-- Chromatic refraction: displace R/G/B at different scales like a real prism -->
+        <template v-if="edgeChromatic">
+          <feDisplacementMap
+            in="blurred_source"
+            in2="displacement_map"
+            :scale="scaleRed"
+            xChannelSelector="R"
+            yChannelSelector="G"
+            result="displaced_r"
+          />
+          <feDisplacementMap
+            in="blurred_source"
+            in2="displacement_map"
+            :scale="scaleBlue"
+            xChannelSelector="R"
+            yChannelSelector="G"
+            result="displaced_b"
+          />
+          <feColorMatrix
+            in="displaced_r"
+            type="matrix"
+            values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 1"
+            result="chan_red"
+          />
+          <feColorMatrix
+            in="displaced"
+            type="matrix"
+            values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 0 1"
+            result="chan_green"
+          />
+          <feColorMatrix
+            in="displaced_b"
+            type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 0 1"
+            result="chan_blue"
+          />
+          <feComposite
+            in="chan_red"
+            in2="chan_green"
+            operator="arithmetic"
+            k1="0" k2="1" k3="1" k4="0"
+            result="chan_rg"
+          />
+          <feComposite
+            in="chan_rg"
+            in2="chan_blue"
+            operator="arithmetic"
+            k1="0" k2="1" k3="1" k4="0"
+            result="displaced"
+          />
+        </template>
 
         <!-- Saturation boost -->
         <feColorMatrix
